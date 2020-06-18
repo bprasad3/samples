@@ -1,0 +1,84 @@
+import { Component, OnInit } from '@angular/core';
+import {Scales} from '../Scales';
+import {KnockoutQuestions} from '../Knockout';
+import {ScaleService} from '../scale.service';
+import {KnockoutService} from '../knockout.service';
+import { isEmpty } from 'rxjs/operators';
+import { Router } from "@angular/router";
+import { TestContext } from "src/app/TestContext";
+
+
+@Component({
+  selector: 'app-create-assessment',
+  templateUrl: './create-assessment.component.html',
+  styleUrls: ['./create-assessment.component.css']
+})
+export class CreateAssessmentComponent implements OnInit {
+    ScaleList: Scales[];
+    testScales: Scales[];
+    selectedScale: Scales;
+
+    JobPostingID : number;
+    myContext: TestContext = new TestContext();
+
+    KnockOutList: KnockoutQuestions[];
+    testKo: KnockoutQuestions[];
+    selectedKo: KnockoutQuestions;
+  constructor(private scaleService: ScaleService , private knockOutService: KnockoutService, private router: Router) {}
+
+  ngOnInit() {
+
+     this.JobPostingID = parseInt(localStorage.getItem("jobPostingID"));
+    console.log(this.JobPostingID);
+    if(!this.JobPostingID) 
+    {
+        alert("Invalid UserID.")
+        this.router.navigate(['']);//Change this so w/e the error page or default page is
+        return;
+    }
+      this.selectedScale = new Scales();
+      this.testScales = new Array();
+
+      this.selectedKo = new KnockoutQuestions();
+      this.testKo   = new Array();
+      this.scaleService.getScaleList().subscribe((data: Scales[]) => {this.ScaleList = data; console.log(data); });
+
+      this.knockOutService.getKnockoutList2().subscribe((data: KnockoutQuestions[]) => {this.KnockOutList = data; console.log(data);});
+  }
+  onSubmit() {
+      console.log("Submitted");
+      this.myContext.JId=this.JobPostingID;
+      this.myContext.Scales=this.testScales;
+      this.myContext.KOs=this.testKo;
+      this.scaleService.createAssessment(this.testScales, this.testKo, this.JobPostingID).subscribe(data => console.log(data), error => console.log(error));
+      this.scaleService.createAssessmentKo(this.testKo, this.JobPostingID).subscribe(data => console.log(data), error => console.log(error));
+  }
+  addToTest() {
+      console.log(this.selectedScale);
+      if  (this.selectedScale != null || this.selectedScale.ScaleId != null ) {
+      this.testScales.push(this.selectedScale);
+          }
+
+  }
+  addToTest2(){
+      console. log(this.selectedKo);
+      if (this.selectedKo.KnockoutQuestionID != 0 || this.selectedKo.KnockoutQuestionID != null )
+      {
+      this.testKo.push(this.selectedKo);
+      }
+      
+  }
+  remove(scale: Scales)
+  {
+     var index = this.testScales.indexOf(scale);
+    
+     this.testScales.splice(index, 1);
+  }
+  remove2(ko: KnockoutQuestions)
+  {
+     var index = this.testKo.indexOf(ko);
+    
+     this.testKo.splice(index, 1);
+  }
+
+}
